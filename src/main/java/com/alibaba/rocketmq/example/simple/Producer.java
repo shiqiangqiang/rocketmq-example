@@ -30,6 +30,7 @@ public class Producer {
          * 因为服务器会回查这个Group下的任意一个Producer
          */
         DefaultMQProducer producer = new DefaultMQProducer("ProducerGroupName");
+        producer.setNamesrvAddr("192.168.199.149:9876;192.168.199.147:9876");
 
         /**
          * Producer对象在使用之前必须要调用start初始化，初始化一次即可<br>
