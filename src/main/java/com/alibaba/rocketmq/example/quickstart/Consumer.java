@@ -15,8 +15,10 @@
  */
 package main.java.com.alibaba.rocketmq.example.quickstart;
 
+import java.io.UnsupportedEncodingException;
 import java.util.List;
 
+import com.alibaba.rocketmq.client.consumer.DefaultMQPullConsumer;
 import com.alibaba.rocketmq.client.consumer.DefaultMQPushConsumer;
 import com.alibaba.rocketmq.client.consumer.listener.ConsumeConcurrentlyContext;
 import com.alibaba.rocketmq.client.consumer.listener.ConsumeConcurrentlyStatus;
@@ -24,6 +26,7 @@ import com.alibaba.rocketmq.client.consumer.listener.MessageListenerConcurrently
 import com.alibaba.rocketmq.client.exception.MQClientException;
 import com.alibaba.rocketmq.common.consumer.ConsumeFromWhere;
 import com.alibaba.rocketmq.common.message.MessageExt;
+import com.alibaba.rocketmq.common.protocol.heartbeat.MessageModel;
 
 
 /**
@@ -33,21 +36,35 @@ public class Consumer {
 
     public static void main(String[] args) throws InterruptedException, MQClientException {
         DefaultMQPushConsumer consumer = new DefaultMQPushConsumer("quickstart_consumer");
+//        DefaultMQPullConsumer consumer = new DefaultMQPullConsumer("quickstart_consumer");
         consumer.setNamesrvAddr("192.168.199.149:9876;192.168.199.147:9876");
         /**
          * 设置Consumer第一次启动是从队列头部开始消费还是队列尾部开始消费<br>
          * 如果非第一次启动，那么按照上次消费的位置继续消费
          */
         consumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_FIRST_OFFSET);
-
+        // 设置一次消费多少条消息
+//        consumer.setConsumeMessageBatchMaxSize(10);
         consumer.subscribe("TopicTest002", "*");
-
+        consumer.setMessageModel(MessageModel.CLUSTERING);  
+        
         consumer.registerMessageListener(new MessageListenerConcurrently() {
 
             @Override
             public ConsumeConcurrentlyStatus consumeMessage(List<MessageExt> msgs,
                     ConsumeConcurrentlyContext context) {
-                System.out.println(Thread.currentThread().getName() + " Receive New Messages: " + msgs);
+            	try {
+            		System.out.println("消息条数：" + msgs.size());
+            		for (MessageExt msg : msgs){
+            			String topic = msg.getTopic();
+            			String tags = msg.getTags();
+            			String msgBody = new String(msg.getBody(),"utf-8");
+            			System.out.println("收到消息：" + " topic: " + topic + ", tags:" + tags + ", msgBody:" + msgBody);
+            		}
+            	} catch (UnsupportedEncodingException e) {
+            		e.printStackTrace();
+            		return ConsumeConcurrentlyStatus.RECONSUME_LATER;
+            	}
                 return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
             }
         });
