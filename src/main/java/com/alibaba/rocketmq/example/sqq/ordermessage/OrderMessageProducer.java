@@ -36,7 +36,7 @@ public class OrderMessageProducer {
 		 * 模拟3笔订单
 		 */
 		String topic = "OrderTopicTest";
-		for (int i=0; i<10; i++){
+		for (int i=0; i<15; i++){
 			String dateStr = sdf.format(new Date());
 			// 假设同一笔订单需要5个操作，而且必须保证同一笔订单要被顺序消费。
 			for (int j=0; j<5; j++){
@@ -51,7 +51,7 @@ public class OrderMessageProducer {
 						Integer id = (Integer)arg;
 						return messageQueueList.get(id);
 					}
-				}, 0);	// 0是队列的下标
+				}, i%4);	// 0是队列的下标
 				
 				System.out.println(sendResult + ", body:" + body);
 			}
